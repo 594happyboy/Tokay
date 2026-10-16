@@ -1,0 +1,23 @@
+{
+  "_comment": "sdkconfig.json v2：只引导内核下载。schemaVersion=2 的清单里没有 pluginRelease / runtime_extensions —— 那些属于已剥离的文档预览插件体系（见 AGENTS.md）。",
+  "schemaVersion": 2,
+
+  "_geckoJavaVersion": "必填：必须等于 APK 内 BuildConfig.GECKOVIEW_VERSION，例如 147.0.20260212191108",
+  "geckoJavaVersion": "147.0.20260212191108",
+
+  "_so": "必填：按 ABI 区分的 so 包信息，仅包含 native so + 仅含 omni.ja 的 base.apk",
+  "so": {
+    "arm64-v8a": {
+      "_url": "必填：该 ABI 对应的 7z 包下载 URL（内部是 jni/so + res/base.apk）",
+      "url": "https://your-cdn.example.com/tokay/geckoview-arm64-v8a-147.0.20260212191108.7z",
+      "_sha256": "必填：该 ABI 压缩包的 SHA-256（十六进制字符串）。空值不会被当作「跳过校验」，而是直接拒绝安装（KernelManifestPolicy.requireSoInfo）：传输链路上无法校验完整性的内核包一律不装。⚠️ 本仓不含内核包（它是运行时下发的产物），所以这里的值是**某一次打包**的结果：本地联调时若 serve-local.sh 报「sha256 不一致」，按它的提示把这里改成你自己那份包的摘要即可。",
+      "sha256": "256e036d9fe327ed43ff274bc01bcedaa749640a28190407fccecb133af84298"
+    },
+    "x86_64": {
+      "_url": "该 ABI 未提供内核包时留空字符串（设备是 x86_64 时会响亮失败，而不是回退到别的 ABI）",
+      "url": "",
+      "_sha256": "同上：留空只对**不提供内核包的 ABI** 成立",
+      "sha256": ""
+    }
+  }
+}

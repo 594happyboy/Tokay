@@ -1,0 +1,6 @@
+<resources>
+    <style name="Theme.Tokay" parent="android:Theme.Material.NoActionBar">
+        <item name="android:colorPrimary">@color/purple_500</item>
+        <item name="android:colorSecondary">@color/teal_200</item>
+    </style>
+</resources>

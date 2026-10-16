@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <title>Hybrid 输入法测试页</title>
+    <style>
+        :root {
+            --bg: #f4f6f8;
+            --card: #ffffff;
+            --border: #d7dee6;
+            --text: #1b2a3a;
+            --muted: #5e6d7c;
+            --primary: #0d6efd;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: "Segoe UI", Arial, sans-serif;
+        }
+
+        .top {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: #eef4ff;
+            border-bottom: 1px solid var(--border);
+            padding: 4px 8px;
+        }
+
+        .viewport-info {
+            font-size: 11px;
+            color: var(--muted);
+            line-height: 1.2;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .container {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 8px 12px 12px;
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+
+        h1, h2 {
+            margin: 0 0 10px;
+        }
+
+        p {
+            margin: 0 0 8px;
+            color: var(--muted);
+        }
+
+        label {
+            display: block;
+            margin: 10px 0 6px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #b8c4d0;
+            border-radius: 8px;
+            background: #fff;
+            font-size: 16px;
+            outline: none;
+        }
+
+        input:focus, textarea:focus, .editable:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.2);
+        }
+
+        textarea {
+            min-height: 90px;
+            height: auto;
+            overflow-y: hidden;
+            resize: none;
+        }
+
+        .editable {
+            min-height: 80px;
+            border: 1px solid #b8c4d0;
+            border-radius: 8px;
+            background: #fff;
+            padding: 12px;
+            font-size: 16px;
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+
+        button {
+            border: 0;
+            background: var(--primary);
+            color: #fff;
+            border-radius: 8px;
+            padding: 10px 12px;
+            font-size: 14px;
+        }
+
+        .spacer {
+            height: 55vh;
+        }
+    </style>
+</head>
+<body>
+    <div class="top">
+        <div class="viewport-info" id="viewportInfo">焦点: 无 | 视口高: - | scrollY: 0</div>
+    </div>
+
+    <div class="container">
+        <div class="card">
+            <h1>输入焦点测试页</h1>
+            <p>用于验证软键盘弹出/收起行为以及输入框可见性。</p>
+            <div class="btn-row">
+                <button type="button" onclick="focusTopInput()">聚焦顶部输入框</button>
+                <button type="button" onclick="focusBottomInput()">聚焦底部输入框</button>
+                <button type="button" onclick="focusEditableArea()">聚焦可编辑区域</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>顶部区域</h2>
+            <label for="topText">文本输入框（顶部）</label>
+            <input id="topText" type="text" placeholder="请在这里输入..." />
+
+            <label for="topEmail">邮箱输入框</label>
+            <input id="topEmail" type="email" placeholder="name@example.com" />
+        </div>
+
+        <div class="card">
+            <h2>中部区域</h2>
+            <label for="midNumber">数字输入框</label>
+            <input id="midNumber" type="number" placeholder="12345" />
+
+            <label for="midPassword">密码输入框</label>
+            <input id="midPassword" type="password" placeholder="请输入密码" />
+
+            <label for="midTextArea">多行输入框</label>
+            <textarea id="midTextArea" placeholder="请在这里输入较长文本..."></textarea>
+        </div>
+
+        <div class="spacer"></div>
+
+        <div class="card" id="bottomCard">
+            <h2>底部区域</h2>
+            <p>该区域特意放在页面底部，用于测试软键盘遮挡问题。</p>
+
+            <label for="bottomText">底部文本输入框</label>
+            <input id="bottomText" type="text" placeholder="用于测试遮挡的底部输入框" />
+
+            <label for="bottomArea">底部多行输入框</label>
+            <textarea id="bottomArea" placeholder="底部多行输入内容"></textarea>
+
+            <label for="editableArea">contenteditable 区域</label>
+            <div id="editableArea" class="editable" contenteditable="true">点击编辑该 contenteditable 区域。</div>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            function activeElementId() {
+                var active = document.activeElement;
+                if (!active) return "无";
+                return active.id || active.tagName || "未知";
+            }
+
+            function updateViewportInfo() {
+                var vv = window.visualViewport;
+                var viewportHeight = vv ? Math.round(vv.height) : window.innerHeight;
+                var vvTop = vv ? Math.round(vv.offsetTop) : 0;
+                var scrollY = Math.round(window.scrollY);
+                document.getElementById("viewportInfo").textContent =
+                    "焦点: " + activeElementId()
+                    + " | innerHeight: " + window.innerHeight
+                    + " | vv.height: " + viewportHeight
+                    + " | vv.top: " + vvTop
+                    + " | scrollY: " + scrollY;
+            }
+
+            function autoResizeTextarea(el) {
+                if (!el) return;
+                el.style.height = "auto";
+                el.style.height = Math.max(el.scrollHeight, 90) + "px";
+            }
+
+            function setupAutoResizeTextareas() {
+                var textareas = document.querySelectorAll("textarea");
+                Array.prototype.forEach.call(textareas, function (el) {
+                    autoResizeTextarea(el);
+                    el.addEventListener("input", function () {
+                        autoResizeTextarea(el);
+                    });
+                });
+            }
+
+            function focusAndCenter(id) {
+                var el = document.getElementById(id);
+                if (!el) return;
+                el.focus();
+                el.scrollIntoView({ behavior: "smooth", block: "center" });
+            }
+
+            window.focusTopInput = function () {
+                focusAndCenter("topText");
+            };
+            window.focusBottomInput = function () {
+                focusAndCenter("bottomText");
+            };
+            window.focusEditableArea = function () {
+                focusAndCenter("editableArea");
+            };
+
+            window.addEventListener("resize", updateViewportInfo);
+            window.addEventListener("scroll", updateViewportInfo, { passive: true });
+            window.addEventListener("focusin", updateViewportInfo);
+            window.addEventListener("focusout", function () {
+                setTimeout(updateViewportInfo, 60);
+            });
+
+            if (window.visualViewport) {
+                window.visualViewport.addEventListener("resize", updateViewportInfo);
+                window.visualViewport.addEventListener("scroll", updateViewportInfo);
+            }
+
+            setupAutoResizeTextareas();
+            updateViewportInfo();
+        })();
+    </script>
+</body>
+</html>

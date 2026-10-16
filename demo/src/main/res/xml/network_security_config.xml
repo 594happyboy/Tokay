@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  只放行回环明文：SDK 需要且仅需要 Gecko 内核的本地资源服务 `http://127.0.0.1:<port>/assets/...`
+  （`LocalFileServer`），以及本地联调的 `-PsdkConfigUrl=http://127.0.0.1:28080/...`
+  （`tools/gecko-package/serve-local.sh` + adb reverse）。这些请求不出设备。
+
+  宿主接入须知：宿主若已有自己的 networkSecurityConfig，请把下面这段 <domain-config> **合并**进去，
+  而不是另起一份配置覆盖 SDK 目录。远程内核包走 https，不依赖明文放行。
+-->
+<network-security-config>
+    <!-- 只放行回环：SDK 的本地服务与本地联调端点都在 127.0.0.1。 -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">localhost</domain>
+        <domain includeSubdomains="false">127.0.0.1</domain>
+        <domain includeSubdomains="false">::1</domain>
+    </domain-config>
+
+    <!-- minSdk 26 上默认允许明文，这里显式关闭，保证 API 26/27 与 28+ 行为一致。 -->
+    <base-config cleartextTrafficPermitted="false" />
+</network-security-config>

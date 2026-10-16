@@ -1,0 +1,36 @@
+plugins {
+    id 'groovy'
+    id 'java-gradle-plugin'
+}
+
+repositories {
+    google()
+    mavenCentral()
+}
+
+dependencies {
+    implementation localGroovy()
+    implementation gradleApi()
+
+    implementation 'org.ow2.asm:asm:9.6'
+    implementation 'org.ow2.asm:asm-commons:9.6'
+
+    implementation 'com.android.tools.build:gradle:8.6.0'
+
+    // 内核包写入：SevenZWriter 只用 xz 的 LZMA2 编码器，7z 容器（签名头 + 头部 + 子流表）由它自己写。
+    // 版本与 tokay-archive（内核包解压侧）保持一致。
+    implementation 'org.tukaani:xz:1.10'
+
+    // 测试用与 tokay-archive 同款的解码器（commons-compress SevenZFile）读回产物
+    testImplementation 'org.apache.commons:commons-compress:1.26.0'
+    testImplementation 'junit:junit:4.13.2'
+}
+
+gradlePlugin {
+    plugins {
+        geckoViewAsm {
+            id = 'com.happyboy.tokay.asm'
+            implementationClass = 'com.happyboy.tokay.asm.GeckoViewInstrumentPlugin'
+        }
+    }
+}

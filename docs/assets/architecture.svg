@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1180 700" width="1180" height="700" font-family="Helvetica, Arial, 'Noto Sans CJK SC', sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#37474f"/>
+    </marker>
+    <marker id="arrowRed" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#c62828"/>
+    </marker>
+    <marker id="arrowGreen" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#2e7d32"/>
+    </marker>
+  </defs>
+
+  <rect width="1180" height="700" fill="#ffffff"/>
+
+  <text x="40" y="42" font-size="22" font-weight="bold" fill="#1a237e">Tokay — 把浏览器内核放到 APK 外面</text>
+  <text x="40" y="66" font-size="13" fill="#546e7a">GeckoView 留在 APK 里；162.3 MiB 的 .so 与 13.2 MiB 的资源不再进包。</text>
+
+  <rect x="40"  y="92" width="330" height="30" rx="4" fill="#e8eaf6"/>
+  <text x="205" y="112" font-size="14" font-weight="bold" fill="#283593" text-anchor="middle">构建期</text>
+
+  <rect x="420" y="92" width="330" height="30" rx="4" fill="#e0f2f1"/>
+  <text x="585" y="112" font-size="14" font-weight="bold" fill="#00695c" text-anchor="middle">发布产物</text>
+
+  <rect x="800" y="92" width="340" height="30" rx="4" fill="#fff3e0"/>
+  <text x="970" y="112" font-size="14" font-weight="bold" fill="#e65100" text-anchor="middle">运行期（设备）</text>
+
+  <rect x="40" y="140" width="330" height="74" rx="6" fill="#f5f5f5" stroke="#9e9e9e"/>
+  <text x="56" y="164" font-size="13" font-weight="bold" fill="#212121">GeckoView AAR  220.7 MiB</text>
+  <text x="56" y="184" font-size="12" fill="#424242">jni/arm64-v8a/*.so … 162.3 MiB</text>
+  <text x="56" y="202" font-size="12" fill="#424242">assets/omni.ja … 13.2 MiB</text>
+
+  <path d="M 150 214 L 150 244" stroke="#c62828" stroke-width="2" marker-end="url(#arrowRed)" fill="none"/>
+  <text x="160" y="228" font-size="10.5" fill="#c62828">总是剔除：.so</text>
+  <text x="160" y="242" font-size="10.5" fill="#c62828">按构建类型：omni.ja</text>
+
+  <rect x="40" y="246" width="330" height="96" rx="6" fill="#e8f5e9" stroke="#2e7d32"/>
+  <text x="56" y="270" font-size="13" font-weight="bold" fill="#1b5e20">ASM 字节码插桩</text>
+  <text x="56" y="290" font-size="11.5" fill="#2e7d32" font-family="monospace">GeckoLoader.{getLibraryPath, getLibraryBase,</text>
+  <text x="56" y="306" font-size="11.5" fill="#2e7d32" font-family="monospace">  doLoadLibrary, attemptLoad, loadGeckoLibs}</text>
+  <text x="56" y="322" font-size="11.5" fill="#2e7d32" font-family="monospace">GeckoThread.getMainProcessArgs</text>
+  <text x="56" y="338" font-size="11" fill="#1b5e20">6 个目标，按精确 descriptor 匹配</text>
+
+  <rect x="40" y="362" width="330" height="86" rx="6" fill="#fff8e1" stroke="#f9a825"/>
+  <text x="56" y="385" font-size="13" font-weight="bold" fill="#e65100">构建期「生效断言」（preBuild）</text>
+  <text x="56" y="405" font-size="11.5" fill="#5d4037">核对六个目标是否仍在 AAR 里，</text>
+  <text x="56" y="421" font-size="11.5" fill="#5d4037">以及发射出去的类名是否仍解析得到。</text>
+  <text x="56" y="439" font-size="11.5" font-weight="bold" fill="#c62828">目标缺失 → 构建失败，而不是真机崩。</text>
+
+  <rect x="40" y="468" width="330" height="52" rx="6" fill="#eceff1" stroke="#607d8b"/>
+  <text x="56" y="490" font-size="13" font-weight="bold" fill="#263238">你的 APK  —  17.4 MiB</text>
+  <text x="56" y="509" font-size="11.5" fill="#455a64">lib/ 里没有任何 GeckoView .so</text>
+
+  <path d="M 370 494 L 410 494" stroke="#37474f" stroke-width="2" marker-end="url(#arrow)" fill="none"/>
+
+  <rect x="420" y="140" width="330" height="120" rx="6" fill="#e0f2f1" stroke="#00897b"/>
+  <text x="436" y="164" font-size="13" font-weight="bold" fill="#004d40">内核包 .7z — 57.4 MiB</text>
+  <text x="436" y="185" font-size="11.5" fill="#37474f">libxul.so、另外 12 个 .so、res/base.apk</text>
+  <text x="436" y="204" font-size="11.5" fill="#37474f">解压后在设备上占 175.2 MiB</text>
+  <text x="436" y="228" font-size="11.5" fill="#00695c" font-weight="bold">每个 ABI 一个包</text>
+  <text x="436" y="248" font-size="11.5" fill="#00695c">arm64-v8a / armeabi-v7a / x86_64</text>
+
+  <rect x="420" y="278" width="330" height="112" rx="6" fill="#e0f2f1" stroke="#00897b"/>
+  <text x="436" y="302" font-size="13" font-weight="bold" fill="#004d40">sdkconfig.json</text>
+  <text x="436" y="322" font-size="11.5" fill="#37474f" font-family="monospace">so.&lt;abi&gt;.url      so.&lt;abi&gt;.sha256</text>
+  <text x="436" y="340" font-size="11.5" fill="#37474f" font-family="monospace">geckoJavaVersion</text>
+  <text x="436" y="364" font-size="11.5" fill="#00695c">纯 JSON —— 故意不内嵌签名</text>
+  <text x="436" y="381" font-size="11.5" fill="#00695c">（避开规范化序列化的坑）</text>
+
+  <rect x="420" y="406" width="330" height="66" rx="6" fill="#fce4ec" stroke="#ad1457"/>
+  <text x="436" y="430" font-size="13" font-weight="bold" fill="#880e4f">sdkconfig.json.sig</text>
+  <text x="436" y="450" font-size="11.5" fill="#4a148c">对响应体原始字节的分离式签名</text>
+  <text x="436" y="466" font-size="11.5" fill="#4a148c" font-family="monospace">ECDSA P-256 / SHA-256, base64(DER)</text>
+
+  <path d="M 750 200 L 790 200" stroke="#37474f" stroke-width="2" marker-end="url(#arrow)" fill="none"/>
+  <path d="M 750 334 L 790 334" stroke="#37474f" stroke-width="2" marker-end="url(#arrow)" fill="none"/>
+
+  <rect x="800" y="140" width="340" height="230" rx="6" fill="#fffde7" stroke="#f9a825"/>
+  <text x="816" y="164" font-size="13" font-weight="bold" fill="#e65100">1 — 校验信任链</text>
+  <text x="816" y="188" font-size="11.5" fill="#3e2723">内置公钥（裸 X/Y 十六进制）</text>
+  <path d="M 830 196 L 830 214" stroke="#2e7d32" stroke-width="2" marker-end="url(#arrowGreen)" fill="none"/>
+  <text x="816" y="232" font-size="11.5" fill="#3e2723">校验 sdkconfig.json.sig</text>
+  <path d="M 830 240 L 830 258" stroke="#2e7d32" stroke-width="2" marker-end="url(#arrowGreen)" fill="none"/>
+  <text x="816" y="276" font-size="11.5" fill="#3e2723">.7z 的 sha256 与清单一致</text>
+  <path d="M 830 284 L 830 302" stroke="#2e7d32" stroke-width="2" marker-end="url(#arrowGreen)" fill="none"/>
+  <text x="816" y="320" font-size="11.5" fill="#3e2723">解压后再做一次结构校验</text>
+  <text x="816" y="348" font-size="11.5" font-weight="bold" fill="#c62828">任一步失败 → 拒绝安装</text>
+  <text x="816" y="364" font-size="11" fill="#6d4c41">防降级（拒绝更旧的清单）</text>
+
+  <rect x="800" y="390" width="340" height="152" rx="6" fill="#e8eaf6" stroke="#3949ab"/>
+  <text x="816" y="414" font-size="13" font-weight="bold" fill="#1a237e">2 — 加载内核</text>
+  <text x="816" y="438" font-size="11" fill="#283593" font-family="monospace">filesDir/geckoview/</text>
+  <text x="816" y="456" font-size="11" fill="#283593" font-family="monospace">versions/&lt;v&gt;/libs/jni/&lt;abi&gt;/*.so</text>
+  <text x="816" y="474" font-size="11" fill="#283593" font-family="monospace">versions/&lt;v&gt;/libs/res/base.apk</text>
+  <text x="816" y="498" font-size="11.5" fill="#1a237e">插桩后的 GeckoLoader 就从这里解析</text>
+  <text x="816" y="513" font-size="11.5" fill="#1a237e">这两条路径——主进程与 Gecko 内容</text>
+  <text x="816" y="528" font-size="11.5" fill="#1a237e">子进程都一样。</text>
+
+  <rect x="40" y="556" width="1100" height="112" rx="6" fill="#fafafa" stroke="#bdbdbd"/>
+  <text x="56" y="580" font-size="13" font-weight="bold" fill="#212121">为什么用插桩，而不是运行时反射</text>
+  <text x="56" y="604" font-size="11.5" fill="#37474f">运行时反射会嫁接 <tspan font-family="monospace">DexPathList.nativeLibraryPathElements</tspan>，不需要构建期插件——但它依赖 <tspan font-weight="bold" fill="#c62828">隐藏 API</tspan>，而 GeckoLoader</text>
+  <text x="56" y="622" font-size="11.5" fill="#37474f">在 findLibrary 返回 null 时抛 <tspan font-family="monospace">Could not find mozglue path.</tspan>，没有退路。对于一个要发布给未知机型的库，这个风险是无界的。</text>
+  <text x="56" y="646" font-size="11.5" fill="#37474f">插桩的风险换成「静默失效」——构建照样绿，真机才炸 <tspan font-family="monospace" fill="#c62828">dlopen failed: library "libmozglue.so" not found</tspan>。</text>
+  <text x="56" y="662" font-size="11.5" font-weight="bold" fill="#1b5e20">Tokay 的做法：构建期断言六个目标都在，并按需跨 GeckoView 版本复核。</text>
+</svg>

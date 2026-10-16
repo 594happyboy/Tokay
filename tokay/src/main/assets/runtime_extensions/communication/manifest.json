@@ -1,0 +1,32 @@
+{
+  "manifest_version": 2,
+  "name": "Android Communication",
+  "version": "1.2",
+  "description": "安卓原生建立连接 extension",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "communication@canqu.org"
+    }
+  },
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": [
+        "bridge.page.js",
+        "bridge.plugin.js"
+      ],
+      "run_at": "document_start"
+    }
+  ],
+  "permissions": [
+    "nativeMessaging",
+    "nativeMessagingFromContent",
+    "geckoViewAddons",
+    "webRequest",
+    "webRequestBlocking",
+    "<all_urls>"
+  ]
+}

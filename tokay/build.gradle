@@ -1,0 +1,85 @@
+plugins {
+    id 'com.android.library'
+    id 'org.jetbrains.kotlin.android'
+    id 'org.jetbrains.kotlin.plugin.serialization'
+}
+
+ext {
+    /**
+     * GeckoView Java/so 版本号，必须与下面 `org.mozilla.geckoview:geckoview` 的坐标完全一致。
+     *
+     * 注入为 `BuildConfig.GECKOVIEW_VERSION`，同时决定三件事：校验清单里的 `geckoJavaVersion`、
+     * 本地内核目录 `versions/<version>/` 的命名、`GeckoCoreState` 的代际识别。**四处版本要一起动。**
+     *
+     * `-PgeckoviewVersion=` 覆盖只供 `tools/tokay-compat-matrix.sh` 跑多版本断言，常规构建别传。
+     */
+    geckoviewVersion = project.findProperty("geckoviewVersion") ?: "147.0.20260212191108"
+}
+
+android {
+    namespace 'com.happyboy.tokay'
+    compileSdk 36
+
+    defaultConfig {
+        minSdk 26
+        targetSdk 36
+
+        buildConfigField "String", "GECKOVIEW_VERSION", "\"$geckoviewVersion\""
+
+        // 内核清单地址**没有默认值**，接入方必须显式提供：它决定了内核从哪来、用哪把公钥验签，
+        // 属于接入方的信任决策。给个默认地址只会把"忘了配"变成"装不上内核"。
+        //   -PsdkConfigUrl=http://127.0.0.1:28080/sdkconfig.json   （本地联调）
+        def sdkConfigUrl = project.findProperty("sdkConfigUrl") ?: ""
+        buildConfigField "String", "SDK_CONFIG_URL", "\"$sdkConfigUrl\""
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+    }
+
+    buildFeatures {
+        buildConfig true    // GECKOVIEW_VERSION / SDK_CONFIG_URL
+    }
+
+    // 让 android.jar 的桩方法返回默认值，而不是抛 `Method ... not mocked`：本模块的 JVM 单测里零
+    // `android.*` import，但被测路径一旦碰到 `android.util.Log` 就会失败。
+    // 注意 Groovy DSL 下属性名没有 `is` 前缀，写成 `unitTests.isReturnDefaultValues` 会报错。
+    testOptions {
+        unitTests.returnDefaultValues = true
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    kotlinOptions {
+        jvmTarget = '17'
+
+        /**
+         * 让接口里带默认体的方法编译成**真正的 JVM 默认方法**。
+         *
+         * 不加这个 flag（Kotlin 默认）时接口方法在字节码里仍是 `public abstract`，默认体被搬到
+         * `Xxx$DefaultImpls`。于是给 `HybridWebView.LoadListener` 这类接口新增带默认体的回调后，
+         * **没被重新编译的实现类**（增量构建不会重编未变的类，消费者升级 AAR 同理）调用它会抛
+         * `AbstractMethodError`。护栏是 `InterfaceDefaultMethodBinaryCompatTest`，去掉本 flag 立刻变红。
+         */
+        freeCompilerArgs += ['-Xjvm-default=all']
+    }
+}
+
+dependencies {
+    implementation project(':tokay-archive')
+
+    implementation 'androidx.webkit:webkit:1.13.0'
+    implementation 'androidx.core:core-ktx:1.9.0'
+
+    testImplementation 'junit:junit:4.13.2'
+    // 单测里 android.jar 的 org.json 是桩，加这个真实现才能测到 JSON 往返
+    testImplementation 'org.json:json:20231013'
+
+    implementation("org.mozilla.geckoview:geckoview:$geckoviewVersion")
+
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
+}

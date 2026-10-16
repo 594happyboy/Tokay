@@ -1,0 +1,68 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+    id 'com.happyboy.tokay.asm'
+    id 'org.jetbrains.kotlin.plugin.compose'
+}
+
+android {
+    namespace 'com.happyboy.tokay.demo'
+    compileSdk 36
+
+    defaultConfig {
+        applicationId "com.happyboy.tokay.demo"
+        minSdk 26
+        targetSdk 36
+        versionCode 1
+        versionName "1.0"
+
+        // 内核包按 ABI 分；随包模式要求 ABI 过滤，单 ABI 也正是本 demo 要演示的形态
+        ndk {
+            abiFilters 'arm64-v8a'
+        }
+
+        // 与插件读的是**同一个**开关函数：注入 assets 与运行期声明必须取同一个值，
+        // 否则会出现「声明随包但包里没有包」这种本该被挡住的状态。
+        def packagedKernel = com.happyboy.tokay.asm.PackagedKernelSwitch.isEnabled(project)
+        buildConfigField "boolean", "PACKAGED_KERNEL", "${packagedKernel}"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+
+    buildFeatures {
+        compose true
+        buildConfig true
+    }
+}
+
+dependencies {
+    implementation project(':tokay')
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.1'
+    implementation 'androidx.activity:activity-compose:1.8.0'
+    implementation 'androidx.compose.ui:ui'
+    implementation 'androidx.compose.ui:ui-graphics'
+
+    implementation platform('androidx.compose:compose-bom:2025.10.01')
+    implementation 'androidx.compose.material3:material3'
+
+    // Android Studio 预览支持
+    implementation 'androidx.compose.ui:ui-tooling-preview'
+    debugImplementation 'androidx.compose.ui:ui-tooling'
+}
+
+// ASM 插桩「生效断言」挂到 preBuild：visitor 靠精确的类名+方法名+descriptor 匹配，GeckoView 改签名
+// 会静默漏插桩（构建仍绿，真机才报 dlopen failed: library "libmozglue.so" not found）。
+tasks.matching { it.name == 'preBuild' }.configureEach {
+    dependsOn(tasks.named('verifyGeckoviewInstrumentationTargets'))
+}

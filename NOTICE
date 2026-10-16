@@ -1,0 +1,74 @@
+NOTICE
+======
+
+本项目（Tokay）包含以下第三方开源软件。本文件说明各组件的许可，以及**本项目对其中
+MPL-2.0 组件所做的修改**。
+
+---
+
+## 1. GeckoView —— Mozilla Public License 2.0（**经修改**）
+
+- 组件：`org.mozilla.geckoview:geckoview`
+- 许可：Mozilla Public License 2.0（MPL-2.0）
+- 许可全文：https://www.mozilla.org/MPL/2.0/
+
+### 1.1 本项目对 GeckoView 所做的修改
+
+本项目在**构建期**用自带的 Gradle 插件（id `com.happyboy.tokay.asm`）+ ASM **改写 GeckoView
+的字节码**，共六处：
+
+| 被改写的类 / 方法 | 改动内容 |
+|---|---|
+| `org.mozilla.geckoview.GeckoLoader`：`getLibraryBase` / `getLibraryPath` / `doLoadLibrary` / `attemptLoad` / `loadGeckoLibs` | 动态库加载路径改为 `<filesDir>/geckoview/versions/<version>/libs/jni/<abi>/`，并按 `lgpllibs → gkcodecs → loadGeckoLibsNative` 顺序显式 `System.load` |
+| `org.mozilla.geckoview.GeckoThread#getMainProcessArgs` | 把 `Context.getPackageResourcePath()` 替换为 OTA 内核包里的 `res/base.apk` 路径（本地无内核时回退原路径） |
+
+**改动动机**：GeckoView 的原生库（`libxul.so` 等，解压后约 175 MiB）与资源包 `base.apk`
+**不随本项目的 APK 发布**，而是在运行时从远端下载、解压到应用私有目录后再加载。
+GeckoView 原实现假定这些文件位于 APK 内，故必须改写其查找路径。
+
+### 1.2 修改的源码可得性（MPL-2.0 的要求）
+
+MPL-2.0 是**文件级** copyleft：分发经过修改的 GeckoView 文件时，必须使接收者能够获得这些
+文件的源码。
+
+- **产生上述修改的完整源码**即本仓库的 [`tokay-asm/`](tokay-asm/)
+  —— 它就是这些修改的「首选修改形式」（preferred form for making modifications），
+  包含插件源码、ASM Visitor 与 Gradle 配置。
+  其中被改写的方法签名集中在 `InstrumentationTargets`，
+  插件自身发射的类名集中在 `InstrumentedLibraryNames`。
+- **未被修改的 GeckoView 源码**可按同一版本号从 Mozilla 官方仓库取得
+  （https://hg.mozilla.org/mozilla-central/ 与 GeckoView 发布产物）。
+- 本项目**未修改** GeckoView 的任何 C++/Rust 源码；`libxul.so` 等原生库以**未修改**的形式
+  按 MPL-2.0 分发（其源码同样可从上述 Mozilla 仓库按该版本取得）。
+
+> ⚠️ 仅声明「使用了 GeckoView」**不足以**满足 MPL-2.0 对修改文件的源码可得性要求；
+> 上面第 1.2 节即为满足该要求而写。
+
+---
+
+## 2. 其它第三方组件
+
+| 组件 | 版本 | 许可 |
+|---|---|---|
+| `androidx.webkit:webkit` | 1.13.0 | Apache License 2.0 |
+| `androidx.core:core-ktx` | 1.9.0 | Apache License 2.0 |
+| `org.jetbrains.kotlinx:kotlinx-serialization-json` | 1.6.0 | Apache License 2.0 |
+| `org.jetbrains.kotlinx:kotlinx-coroutines-android` | 1.7.3 | Apache License 2.0 |
+| `org.apache.commons:commons-compress` | 1.26.0 | Apache License 2.0 |
+| `org.tukaani:xz` | 1.10 | Public Domain |
+| Kotlin 标准库 | 1.9.x | Apache License 2.0 |
+
+演示应用（`demo/`）另含 AndroidX Compose / Activity / Lifecycle 等组件，均为 Apache License 2.0。
+
+Apache License 2.0 全文：https://www.apache.org/licenses/LICENSE-2.0
+
+---
+
+## 3. 本项目自身的许可
+
+- **库主体（`tokay/`、`tokay-archive/`、`demo/`、`tools/`）**：Apache License 2.0，见
+  同目录 [`LICENSE`](LICENSE)。
+- **ASM 插桩插件（`tokay-asm/`）**：Mozilla Public License 2.0，
+  见该目录下的 [`LICENSE`](tokay-asm/LICENSE)。
+  之所以单独用 MPL-2.0：它改写 GeckoView 字节码、与 GeckoView 的集成方式直接相关，
+  以同一许可分发可让「修改的源码可得性」这条要求对本插件自身也成立。
