@@ -66,6 +66,38 @@ D GeckoThread: State changed to MOZGLUE_READY
 SELinux 的 `granted { execute }` 说明内核真的从这个目录 mmap 并执行了。同一次改写对 Gecko 的内容
 子进程也生效，而反射在子进程里没有干净的插入点。
 
+### 内核清单（sdkconfig.json）
+
+内核「从哪下、下完对不对」由一份 JSON 清单描述，App 在装内核之前先取它：
+
+```json
+{
+  "schemaVersion": 2,
+  "geckoJavaVersion": "147.0.20260212191108",
+  "so": {
+    "arm64-v8a": {
+      "url": "https://…/releases/download/demo-1/geckoview-arm64-v8a-147.0.20260212191108.7z",
+      "sha256": "a36c5738…（64 位十六进制）"
+    },
+    "x86_64": { "url": "", "sha256": "" }
+  }
+}
+```
+
+（上面省掉了原文件里解释字段用法的 `_comment` 项。）
+
+三个字段决定一切：
+
+- `geckoJavaVersion` 必须等于 APK 里编进去的 GeckoView 版本，对不上就拒绝安装——`.so` 和 Java 层版本
+  错配，装上也是崩。
+- `so.<abi>.url` 是该 ABI 的 7z 包地址。
+- `so.<abi>.sha256` 是那个包的摘要。留空不是跳过校验，而是直接拒绝安装：传输链路上没法校验完整性的
+  内核包一律不装。某个 ABI 不提供包就整条留空，设备恰好是那个 ABI 时会响亮失败，而不是偷偷回退到
+  别的 ABI。
+
+清单地址由接入方在构建期给出（`-PsdkConfigUrl=…`），没有默认值；App 取它的同时会去取
+`<configUrl>.sig` 验签，见下一节。仓库根目录的 `sdkconfig.json` 就是本仓 demo 正在用的那份。
+
 ### 签名 OTA 的信任链
 
 ```
@@ -128,22 +160,25 @@ sh gradlew :demo:assembleDebug -PpackageGeckoKernel=true
 直接让构建失败：三个 ABI 的包都塞进去，APK 会比内核留在 `lib/` 里还大，那就白做了。ABI splits 同样
 被拒。声明 `Packaged` 但包里没有内核包、或声明 `Remote` 却带着内核包，都会报错，不去猜。
 
-## 构建与验证
+## 下载试用
 
-```bash
-sh gradlew :tokay:test :demo:assembleDebug                # 构建 + JVM 单元测试
-sh gradlew :demo:verifyGeckoviewInstrumentationTargets    # 每次 preBuild 也会自动跑
-sh gradlew -p tokay-asm test                              # tokay-asm 是 includeBuild，要单独跑
+[demo APK](https://github.com/594happyboy/Tokay/releases/tag/demo-1)（arm64-v8a，debug 签名，仅供试用）
+装上去就能打开。第一次启动会从同一个 release 下载 57.4 MiB 的内核包，之后就完全离线了。首页显示
+内核来源、状态和当前版本，下面有 HybridWebView API 测试、软键盘适配测试，以及一个可以直接输网址
+的地址框。
 
-bash tools/tokay-compat-matrix.sh 140.0.20250707120347 147.0.20260212191108   # 多版本矩阵
-bash tools/gecko-package/serve-local.sh && adb reverse tcp:28080 tcp:28080    # 本地「远程下发」联调
+那个 release 里是四个文件，就是这条 OTA 链路用到的全部零件：
 
-bash tools/tokay-device-check.sh            # 真机端到端验收：清数据 → 从零下载 → 断言外置加载
-bash tools/tokay-device-check.sh --packaged # 不起发布服务、不建 adb reverse
-```
+| 文件 | 是什么 |
+| --- | --- |
+| `TokayDemo-1.0-arm64-v8a.apk` | demo 应用，清单地址已经编在里面 |
+| `geckoview-arm64-v8a-147.0.20260212191108.7z` | 内核包 |
+| `sdkconfig.json` | 清单，指向上面那个包 |
+| `sdkconfig.json.sig` | 清单的签名 |
 
-内核外置的失效只在真机上暴露，构建永远绿的。所以改过构建链路一定要跑 `tokay-device-check.sh`，
-退出码 0 才算过。
+⚠️ 这份清单是用仓库里那把**公开的演示私钥**签的（`tools/tokay-sign/keys/demo-p256.key`），谁都能签一份
+出来，所以这个 APK 只适合拿来看效果。正式接入必须自建密钥、换掉 App 里内置的公钥，理由见
+`tools/tokay-sign/README.md`。另外内核包放在 GitHub 上，国内下 57 MiB 可能要等一会儿。
 
 ## 限制
 
