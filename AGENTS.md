@@ -77,6 +77,9 @@ HybridWebView.loadUrl(url)
 - **不能用 Ed25519**。真机（Android 12 / API 31）实测 JCA 里没有它，系统自带的 stripped
   BouncyCastle 也没有；Conscrypt 到 API 33 才加。`minSdk 26` 用它 = Android 13 以下全线失败。
   原始输出见 `tools/tokay-sign/README.md`。
+- **不能只靠清单里的 `sha256`**：它的比对基准（`url` 与 `sha256`）和被校验的对象在同一份清单里，
+  中间人替换掉整份清单之后哈希照样对得上——那条路直通「下载并执行任意 `.so`」。清单的真实性只由
+  `.sig` 提供，基准是 APK 内置的公钥。别把它当成"多一次校验"删掉。
 - **分离式签名而非内嵌 `signature` 字段**：内嵌就要求签发端（Python）与校验端（Kotlin）实现同一套
   规范化 JSON 序列化，一处空格/键序差异的症状是设备上「装不上内核」且无可用报错。
 - **签名失败是 `NonRetryableFailure`**：确定性失败，重试 10 次（退避最长 60s）结果一样。
@@ -244,7 +247,7 @@ not found`。所以**改动构建链路后必须跑 `tokay-device-check.sh`**，
 - **键盘适配靠引擎，不靠页面脚本**：库只做一件事——边到边窗口下把 IME 高度作为**底部 padding 施加在
   HybridWebView 自己身上**（`setImeResizeEnabled`）。View 变矮 = 引擎收到一次 resize，而 Gecko /
   Chromium 在输入法打开时本来就会把聚焦的可编辑元素滚进可视区（Gecko 侧即 `nsDOMWindowUtils.ZoomToFocusedInput`，
-  见 Mozilla Bug 1544660 的调用链）。历史教训：这里曾有一套「原生用 PopupWindow 探针算遮挡几何 + 注入
+  见 [Mozilla Bug 1544660](https://bugzilla.mozilla.org/show_bug.cgi?id=1544660) 的调用链）。历史教训：这里曾有一套「原生用 PopupWindow 探针算遮挡几何 + 注入
   1241 行脚本替引擎滚动」的实现（约 2500 行、10 个公开开关），那是在重写引擎已有的行为，还引出一个
   「重载后静默失效」的 bug；已整体删除。两条必须记住的补充：① 引擎的滚动发生在**键盘刚弹出时**
   （那时视口还没缩），所以 padding 缩完之后要补一次 `scrollIntoView` 兜底
