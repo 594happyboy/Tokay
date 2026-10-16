@@ -18,6 +18,8 @@
 #   bash tools/tokay-device-check.sh --keep-data         # 不清数据（复用已装内核）
 #   bash tools/tokay-device-check.sh --no-install        # 不重新构建安装，只跑启动+断言
 #   bash tools/tokay-device-check.sh --pkg com.happyboy.tokay.demo
+#   bash tools/tokay-device-check.sh --sdk-url <清单URL>  # 验真实发布渠道（GitHub Release 等）：
+#                                                        # 不启本地服务、不建 adb reverse
 #
 # 退出码：0 = 通过；1 = 失败（失败原因打印在最后一行 `FAIL:` 开头）。
 set -uo pipefail
@@ -29,6 +31,9 @@ ARCH="${ARCH:-arm64-v8a}"
 TIMEOUT="${TIMEOUT:-180}"
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SDK_URL="http://$HOST:$PORT/sdkconfig.json"
+# 1 = 清单在公网（--sdk-url 给了地址）：不启本地服务、不建 adb reverse。它覆盖的正是本地服务
+# 测不到的那一段——GitHub Release 的资产地址先回 302 再落到 CDN。
+REMOTE_CHANNEL=0
 
 CLEAR_DATA=1
 DO_INSTALL=1
@@ -40,6 +45,8 @@ while [ $# -gt 0 ]; do
     --packaged)   PACKAGED=1 ;;
     --keep-data)  CLEAR_DATA=0 ;;
     --no-install) DO_INSTALL=0 ;;
+    --sdk-url)    SDK_URL="${2:?--sdk-url 需要一个清单地址}"; REMOTE_CHANNEL=1; shift ;;
+    --sdk-url=*)  SDK_URL="${1#*=}"; REMOTE_CHANNEL=1 ;;
     --pkg)        PKG="${2:?--pkg 需要一个包名}"; shift ;;
     --pkg=*)      PKG="${1#*=}" ;;
     --timeout)    TIMEOUT="${2:?--timeout 需要秒数}"; shift ;;
@@ -69,6 +76,10 @@ if [ "$PACKAGED" = 1 ]; then
   # 随包模式的意义就是"不需要网络"：这一轮既不检查服务可达，也不建 adb reverse。
   # 若代码走错到远程路径，会因为没有地址/没有服务直接失败——所以通过即证明用的是包里那份。
   echo "模式: 内核随包（不使用发布服务，也不建 adb reverse）"
+elif [ "$REMOTE_CHANNEL" = 1 ]; then
+  # -L 必须加：GitHub Release 的资产地址先回 302 再落到 CDN，不跟随等于只证明了"302 可达"。
+  curl -sfL --max-time 20 "$SDK_URL" >/dev/null 2>&1 || fail "清单不可达: $SDK_URL"
+  echo "发布渠道: $SDK_URL 可达（公网，不建 adb reverse）"
 else
   curl -sf --max-time 5 "$SDK_URL" >/dev/null 2>&1 || fail "本地发布服务不可达: $SDK_URL
   先起服务：bash tools/gecko-package/serve-local.sh"
